@@ -17,9 +17,11 @@ import (
 	"time"
 )
 
-func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string) {
+func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string, debug bool) {
 	jwt, _ := pubsub.CreateAppJwt(accessToken)
-	println(jwt)
+	if debug {
+		println(jwt)
+	}
 	// Set user credentials and options for NATS connection.
 	opts := []nats.Option{}
 	opts = append(opts, nats.UserJWTAndSeed(jwt, accessToken))
@@ -67,6 +69,9 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string) {
 			panic(fmt.Sprintf("failed to unmarshal message: %w", err))
 		}
 
+		if debug {
+			log.Println(string(data))
+		}
 		var created = time.Now().UTC()
 		uId := utils.CreateSha256Checksum(append([]byte(created.String()), data...))
 
@@ -94,7 +99,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string) {
 
 	// Start serving messages and processing them using the registered handler function.
 	if err := service.Serve(ctx); err != nil {
-		println("\nStopped server")
+		println("\nStopped syntryve")
 		os.Exit(1)
 	}
 }

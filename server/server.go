@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 )
 
 type ApiServer struct {
@@ -85,7 +86,16 @@ func (apiServer *ApiServer) GetLatestKey(c *gin.Context) {
 		return
 	}
 
+	layout := "2006-01-02 15:04:05.99999-07:00"
+	timestamp, err := time.Parse(layout, latestKey)
+	if err != nil {
+		panic(err)
+	}
+
+	// Unix-Timestamp extrahieren
+	unixTimestamp := timestamp.Unix()
+
 	c.JSON(http.StatusOK, gin.H{
-		"latest_key": latestKey,
+		"latest_key": unixTimestamp,
 	})
 }

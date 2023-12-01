@@ -8,6 +8,7 @@ import (
 var (
 	accessToken string
 	dbPath      string
+	debug       bool
 	natsUrl     string
 	streamUrl   string
 	port        int64

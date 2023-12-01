@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/KYVENetwork/syntropy-demo/server"
 	"github.com/KYVENetwork/syntropy-demo/syntropy"
+	"github.com/KYVENetwork/syntropy-demo/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,8 @@ func init() {
 
 	serveCmd.Flags().Int64Var(&port, "port", 4242, "server port")
 
+	serveCmd.Flags().BoolVar(&debug, "debug", false, "debug mode")
+
 	rootCmd.AddCommand(serveCmd)
 }
 
@@ -34,7 +37,11 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve data items of Syntropy stream for validating and archiving in a KYVE pool",
 	Run: func(cmd *cobra.Command, args []string) {
-		go syntropy.StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath)
+		if err := utils.EnsureDBPathExists(dbPath); err != nil {
+			panic(err)
+		}
+
+		go syntropy.StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath, debug)
 		server.StartApiServer(dbPath, port)
 	},
 }
