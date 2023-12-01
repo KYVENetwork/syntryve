@@ -34,27 +34,28 @@ func StartApiServer(dbPath string, port int64) *ApiServer {
 
 func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	fromTimestampUnixStr := c.Param("from_timestamp")
-
 	toTimestampUnixStr := c.Param("to_timestamp")
 
-	println(fmt.Sprintf("Received query: from %v to %v", fromTimestampUnixStr, toTimestampUnixStr))
+	fmt.Printf("Received query: from %v to %v\n", fromTimestampUnixStr, toTimestampUnixStr)
 
 	// Set up DB
 	db, err := sql.Open("sqlite3", apiServer.dbPath)
 	if err != nil {
 		panic(err)
 	}
+	defer db.Close()
 
 	query := "SELECT data FROM messages WHERE strftime('%s', created) BETWEEN ? AND ?"
-
 	rows, err := db.Query(query, fromTimestampUnixStr, toTimestampUnixStr)
 	if err != nil {
 		panic(err)
 	}
-	var data []byte
+	defer rows.Close()
 
-	var dataList []byte
+	var messages [][]byte
+
 	for rows.Next() {
+		var data []byte
 		err = rows.Scan(&data)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -62,10 +63,10 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 			})
 			return
 		}
-		dataList = append(dataList, data...)
+
+		messages = append(messages, data)
 	}
-	rows.Close()
-	c.Data(http.StatusOK, "application/json", dataList)
+	c.JSON(http.StatusOK, messages)
 }
 
 func (apiServer *ApiServer) GetLatestKey(c *gin.Context) {
