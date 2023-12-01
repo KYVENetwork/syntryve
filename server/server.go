@@ -66,7 +66,12 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 
 		messages = append(messages, data)
 	}
-	c.JSON(http.StatusOK, messages)
+
+	if len(messages) == 0 {
+		c.JSON(http.StatusOK, [][]byte{})
+	} else {
+		c.JSON(http.StatusOK, messages)
+	}
 }
 
 func (apiServer *ApiServer) GetLatestKey(c *gin.Context) {
