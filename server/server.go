@@ -59,11 +59,13 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	// return empty set if client requests data before server started
 	if apiServer.startTime >= fromTimestampUnix {
 		c.JSON(http.StatusOK, [][]byte{})
+		return
 	}
 
 	// return empty set if client requests data which is in the future
 	if time.Now().Unix() <= toTimestampUnix {
 		c.JSON(http.StatusOK, [][]byte{})
+		return
 	}
 
 	// Set up DB
