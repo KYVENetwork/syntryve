@@ -5,18 +5,21 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 type ApiServer struct {
-	port   int64
-	dbPath string
+	port      int64
+	dbPath    string
+	startTime int64
 }
 
 func StartApiServer(dbPath string, port int64) *ApiServer {
 	apiServer := &ApiServer{
-		port:   port,
-		dbPath: dbPath,
+		port:      port,
+		dbPath:    dbPath,
+		startTime: time.Now().Unix(),
 	}
 
 	gin.SetMode(gin.ReleaseMode)
@@ -37,6 +40,31 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	toTimestampUnixStr := c.Param("to_timestamp")
 
 	fmt.Printf("Received query: from %v to %v\n", fromTimestampUnixStr, toTimestampUnixStr)
+
+	fromTimestampUnix, err := strconv.ParseInt(fromTimestampUnixStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	toTimestampUnix, err := strconv.ParseInt(toTimestampUnixStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// return empty set if client requests data before server started
+	if apiServer.startTime > fromTimestampUnix {
+		c.JSON(http.StatusOK, [][]byte{})
+	}
+
+	// return empty set if client requests data which is in the future
+	if time.Now().Unix() < toTimestampUnix {
+		c.JSON(http.StatusOK, [][]byte{})
+	}
 
 	// Set up DB
 	db, err := sql.Open("sqlite3", apiServer.dbPath)
