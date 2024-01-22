@@ -92,7 +92,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 	if err != nil {
 		panic(err)
 	}
-
+if mlen(lmsgs == 1 {})
 	subscription, err := js.PullSubscribe(streamUrl, consumerId, nats.ManualAck(), nats.Bind(exampleStreamName, consumerId))
 	if err != nil {
 		fmt.Print("Error during pull subscription: ", err)
@@ -107,36 +107,39 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 				}
 				fmt.Print("Error during pulling next message: ", err)
 			}
-			msg := msgs[0]
 
-			timestamp, err := strconv.ParseInt(msg.Header.Get("timestamp"), 10, 64)
-			if err != nil {
-				panic(err)
-			}
+			if len(msgs) == 1 {
+				msg := msgs[0]
 
-			created := time.Unix(timestamp/1e9, 0)
-			uId := utils.CreateSha256Checksum(append([]byte(created.String()), msg.Data...))
+				timestamp, err := strconv.ParseInt(msg.Header.Get("timestamp"), 10, 64)
+				if err != nil {
+					panic(err)
+				}
 
-			fmt.Println("Received message ", created, " with size ", len(msg.Data))
+				created := time.Unix(timestamp/1e9, 0)
+				uId := utils.CreateSha256Checksum(append([]byte(created.String()), msg.Data...))
 
-			if debug {
-				fmt.Println(string(msg.Data))
-			}
+				fmt.Println("Received message ", created, " with size ", len(msg.Data))
 
-			result, err := stmt.Exec(uId, created, msg.Data)
-			if err != nil {
-				panic(err)
-			}
+				if debug {
+					fmt.Println(string(msg.Data))
+				}
 
-			// Check the number of rows affected to determine if the insert was successful
-			rowsAffected, _ := result.RowsAffected()
-			if rowsAffected == 0 {
-				log.Println("No rows were affected, insert may have failed")
-				os.Exit(1)
-			}
+				result, err := stmt.Exec(uId, created, msg.Data)
+				if err != nil {
+					panic(err)
+				}
 
-			if err := msg.Ack(); err != nil {
-				fmt.Println("Error during message ack: ", err)
+				// Check the number of rows affected to determine if the insert was successful
+				rowsAffected, _ := result.RowsAffected()
+				if rowsAffected == 0 {
+					log.Println("No rows were affected, insert may have failed")
+					os.Exit(1)
+				}
+
+				if err := msg.Ack(); err != nil {
+					fmt.Println("Error during message ack: ", err)
+				}
 			}
 		}
 	}()
