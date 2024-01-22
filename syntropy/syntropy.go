@@ -18,13 +18,12 @@ import (
 )
 
 const (
-	exampleStreamName  = "osmosis-stream"
-	uniqueConsumerName = "troykessler"
-	streamSize         = 20_000
-	streamTTL          = 24 * time.Hour
+	exampleStreamName = "osmosis-stream"
+	streamSize        = 20_000
+	streamTTL         = 24 * time.Hour
 )
 
-func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string, debug bool) {
+func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string, debug bool) {
 	jwt, _ := pubsub.CreateAppJwt(accessToken)
 	if debug {
 		println(jwt)
@@ -63,7 +62,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string, debug bool)
 	fmt.Printf("JetStream %s added successfully.\n", exampleStreamName)
 
 	_, err = js.AddConsumer(exampleStreamName, &nats.ConsumerConfig{
-		Durable: uniqueConsumerName,
+		Durable: consumerId,
 	})
 	if err != nil {
 		fmt.Printf("Error during adding consumer of JetStream %s: %s", exampleStreamName, err)
@@ -94,7 +93,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string, debug bool)
 		panic(err)
 	}
 
-	subscription, err := js.PullSubscribe(streamUrl, uniqueConsumerName, nats.ManualAck(), nats.Bind(exampleStreamName, uniqueConsumerName))
+	subscription, err := js.PullSubscribe(streamUrl, consumerId, nats.ManualAck(), nats.Bind(exampleStreamName, consumerId))
 	if err != nil {
 		fmt.Print("Error during pull subscription: ", err)
 	}

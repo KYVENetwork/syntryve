@@ -24,6 +24,11 @@ func init() {
 		panic(fmt.Errorf("flag 'stream-url' should be required: %w", err))
 	}
 
+	serveCmd.Flags().StringVar(&consumerId, "consumer-id", "", "url of Syntropy stream")
+	if err := serveCmd.MarkFlagRequired("consumer-id"); err != nil {
+		panic(fmt.Errorf("flag 'consumer-id' should be required: %w", err))
+	}
+
 	serveCmd.Flags().StringVar(&dbPath, "db-path", ".syntropy/syntropy.db", "path to SQLite DB")
 
 	serveCmd.Flags().Int64Var(&port, "port", 4242, "server port")
@@ -41,7 +46,7 @@ var serveCmd = &cobra.Command{
 			panic(err)
 		}
 
-		go syntropy.StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath, debug)
+		go syntropy.StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath, debug)
 		server.StartApiServer(dbPath, port)
 	},
 }

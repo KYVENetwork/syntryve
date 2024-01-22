@@ -11,6 +11,7 @@ var (
 	debug       bool
 	natsUrl     string
 	streamUrl   string
+	consumerId  string
 	port        int64
 )
 
