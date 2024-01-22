@@ -92,7 +92,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 	if err != nil {
 		panic(err)
 	}
-if mlen(lmsgs == 1 {})
+
 	subscription, err := js.PullSubscribe(streamUrl, consumerId, nats.ManualAck(), nats.Bind(exampleStreamName, consumerId))
 	if err != nil {
 		fmt.Print("Error during pull subscription: ", err)
