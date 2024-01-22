@@ -151,4 +151,5 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, dbPath string, debug bool)
 	}
 
 	fmt.Println("Subscription stopped")
+	os.Exit(0)
 }
