@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -22,6 +23,8 @@ const (
 	streamSize        = 20_000
 	streamTTL         = 24 * time.Hour
 )
+
+var mu sync.Mutex
 
 func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string, debug bool) {
 	jwt, _ := pubsub.CreateAppJwt(accessToken)
@@ -76,6 +79,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 	}
 
 	// Create the required table if it doesn't exist
+	mu.Lock()
 	_, err = db.Exec(`
         CREATE TABLE IF NOT EXISTS messages (
             uId TEXT PRIMARY KEY,
@@ -83,6 +87,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
             created TIMESTAMP
         )
     `)
+	mu.Unlock()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -125,7 +130,9 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 					fmt.Println(string(msg.Data))
 				}
 
+				mu.Lock()
 				result, err := stmt.Exec(uId, created, msg.Data)
+				mu.Unlock()
 				if err != nil {
 					panic(err)
 				}

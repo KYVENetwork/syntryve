@@ -6,10 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 )
 
 type ApiServer struct {
+	mu        sync.Mutex
 	port      int64
 	dbPath    string
 	startTime int64
@@ -76,7 +78,9 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	defer db.Close()
 
 	query := "SELECT data FROM messages WHERE strftime('%s', created) BETWEEN ? AND ?"
+	apiServer.mu.Lock()
 	rows, err := db.Query(query, fromTimestampUnixStr, toTimestampUnixStr)
+	apiServer.mu.Unlock()
 	if err != nil {
 		panic(err)
 	}
