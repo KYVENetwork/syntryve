@@ -78,7 +78,7 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	query := "SELECT data FROM messages WHERE strftime('%s', created) BETWEEN ? AND ?"
 	mu.Lock()
 	rows, err := db.Query(query, fromTimestampUnixStr, toTimestampUnixStr)
-	mu.Unlock()
+
 	if err != nil {
 		panic(err)
 	}
@@ -99,6 +99,8 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 		messages = append(messages, data)
 	}
 
+	mu.Unlock()
+
 	if len(messages) == 0 {
 		c.JSON(http.StatusOK, [][]byte{})
 	} else {
@@ -114,6 +116,8 @@ func (apiServer *ApiServer) GetLatestKey(c *gin.Context) {
 	}
 
 	query := "SELECT MAX(created) FROM messages"
+
+	mu.Lock()
 
 	var latestKey string
 	rows, err := db.Query(query)
@@ -135,6 +139,8 @@ func (apiServer *ApiServer) GetLatestKey(c *gin.Context) {
 			return
 		}
 	}
+
+	mu.Unlock()
 
 	layout := "2006-01-02 15:04:05.99999-07:00"
 	timestamp, err := time.Parse(layout, latestKey)

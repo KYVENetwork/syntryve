@@ -132,7 +132,6 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 
 				mu.Lock()
 				result, err := stmt.Exec(uId, created, msg.Data)
-				mu.Unlock()
 				if err != nil {
 					panic(err)
 				}
@@ -143,10 +142,12 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 					log.Println("No rows were affected, insert may have failed")
 					os.Exit(1)
 				}
+				mu.Unlock()
 
 				if err := msg.Ack(); err != nil {
 					fmt.Println("Error during message ack: ", err)
 				}
+
 			}
 		}
 	}()
