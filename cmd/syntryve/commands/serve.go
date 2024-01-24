@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"github.com/KYVENetwork/syntropy-demo/server"
 	"github.com/KYVENetwork/syntropy-demo/syntropy"
 	"github.com/KYVENetwork/syntropy-demo/utils"
 	"github.com/spf13/cobra"
@@ -47,6 +46,6 @@ var serveCmd = &cobra.Command{
 		}
 
 		go syntropy.StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath, debug)
-		server.StartApiServer(dbPath, port)
+		syntropy.StartApiServer(dbPath, port)
 	},
 }
