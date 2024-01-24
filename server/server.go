@@ -114,12 +114,24 @@ func (apiServer *ApiServer) GetLatestKey(c *gin.Context) {
 	query := "SELECT MAX(created) FROM messages"
 
 	var latestKey string
-	err = db.QueryRow(query).Scan(&latestKey)
+	rows, err := db.Query(query)
+	defer rows.Close()
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
+	}
+
+	for rows.Next() {
+		err := rows.Scan(&latestKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
 	}
 
 	layout := "2006-01-02 15:04:05.99999-07:00"
