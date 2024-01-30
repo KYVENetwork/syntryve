@@ -1,7 +1,7 @@
 package main
 
 import (
-	cmd "github.com/KYVENetwork/syntropy-demo/cmd/syntryve/commands"
+	cmd "github.com/KYVENetwork/syntryve/cmd/syntryve/commands"
 )
 
 func main() {

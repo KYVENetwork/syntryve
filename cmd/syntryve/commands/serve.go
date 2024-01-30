@@ -2,9 +2,12 @@ package commands
 
 import (
 	"fmt"
-	"github.com/KYVENetwork/syntropy-demo/syntropy"
-	"github.com/KYVENetwork/syntropy-demo/utils"
+	"github.com/KYVENetwork/syntryve/pruner"
+	"github.com/KYVENetwork/syntryve/syntropy"
+	"github.com/KYVENetwork/syntryve/utils"
 	"github.com/spf13/cobra"
+	"os"
+	"slices"
 )
 
 func init() {
@@ -32,6 +35,14 @@ func init() {
 
 	serveCmd.Flags().Int64Var(&port, "port", 4242, "server port")
 
+	serveCmd.Flags().Int64Var(&pruningInterval, "pruning-interval", 30, "pruning interval in minutes")
+
+	serveCmd.Flags().StringVar(&chainId, "chain-id", "kyve-1", "KYVE chain-id (required for pruning)")
+
+	serveCmd.Flags().Int64Var(&poolId, "pool-id", 0, "KYVE pool id (required for pruning)")
+
+	serveCmd.Flags().StringVar(&poolEndpoints, "endpoints", "", "overwrite endpoints to query latest KYVE pool key")
+
 	serveCmd.Flags().BoolVar(&debug, "debug", false, "debug mode")
 
 	rootCmd.AddCommand(serveCmd)
@@ -41,11 +52,28 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve data items of Syntropy stream for validating and archiving in a KYVE pool",
 	Run: func(cmd *cobra.Command, args []string) {
+		if pruningInterval > 0 {
+			supportedChains := []string{"kyve-1", "kaon-1", "korellia-2"}
+			if !slices.Contains(supportedChains, chainId) {
+				logger.Error().Str("chain-id", chainId).Msg("specified chain-id %v is not supported")
+				os.Exit(1)
+			}
+			if pruningInterval < 10 {
+				logger.Error().Msg("pruning interval needs to be bigger than 10 minutes")
+				os.Exit(1)
+			}
+		}
+
 		if err := utils.EnsureDBPathExists(dbPath); err != nil {
 			panic(err)
 		}
 
 		go syntropy.StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath, debug)
-		syntropy.StartApiServer(dbPath, port)
+
+		if pruningInterval > 0 {
+			go pruner.StartPruningScheduler(pruningInterval, poolId, dbPath, chainId, poolEndpoints, debug)
+		}
+
+		syntropy.StartApiServer(dbPath, debug, port)
 	},
 }
