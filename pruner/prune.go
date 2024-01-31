@@ -35,6 +35,14 @@ func PruneDB(until, dbPath string) error {
 
 	rowsAffected, _ := result.RowsAffected()
 	log.Printf("Deleted %v entries\n", rowsAffected)
+
+	// VACUUM the database to reclaim unused space
+	_, err = db.Exec("VACUUM")
+	if err != nil {
+		mu.Unlock()
+		return fmt.Errorf("failed to vacuum db: %v", err)
+	}
+
 	mu.Unlock()
 
 	return nil
