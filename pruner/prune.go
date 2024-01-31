@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/KYVENetwork/syntryve/utils"
-	"log"
 	"sync"
 )
 
@@ -34,7 +33,7 @@ func PruneDB(until, dbPath string) error {
 	}
 
 	rowsAffected, _ := result.RowsAffected()
-	log.Printf("Deleted %v entries\n", rowsAffected)
+	logger.Info().Msg(fmt.Sprintf("Deleted %v entries\n", rowsAffected))
 
 	// VACUUM the database to reclaim unused space
 	_, err = db.Exec("VACUUM")
