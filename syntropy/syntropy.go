@@ -71,7 +71,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 		os.Exit(1)
 	}
 	if debug {
-		logger.Info().Msg(fmt.Sprintf("JetStream %s added successfully.\n", exampleStreamName))
+		logger.Info().Msg(fmt.Sprintf("JetStream %s added successfully.", exampleStreamName))
 	}
 
 	_, err = js.AddConsumer(exampleStreamName, &nats.ConsumerConfig{
@@ -83,7 +83,7 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 	}
 
 	if debug {
-		logger.Info().Msg(fmt.Sprintf("Consumer to stream %s added successfully.\n", exampleStreamName))
+		logger.Info().Msg(fmt.Sprintf("Consumer to stream %s added successfully.", exampleStreamName))
 	}
 
 	// Set up DB
@@ -129,7 +129,15 @@ func StartSyntropyWS(accessToken, natsUrl, streamUrl, consumerId, dbPath string,
 					logger.Error().Str("err", err.Error()).Msg("error during fetching subscription")
 					return
 				}
+				if errors.Is(err, context.DeadlineExceeded) {
+					logger.Debug().Str("err", err.Error()).Msg("no messages for pulling")
+					continue
+				}
 				logger.Error().Str("err", err.Error()).Msg("error during pulling next message")
+			}
+
+			if len(msgs) != 1 {
+				logger.Info().Msg(fmt.Sprintf("Detected messages: %v", len(msgs)))
 			}
 
 			if len(msgs) == 1 {

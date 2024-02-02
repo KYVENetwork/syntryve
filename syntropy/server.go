@@ -42,7 +42,7 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	toTimestampUnixStr := c.Param("to_timestamp")
 
 	if apiServer.debug {
-		logger.Info().Msg(fmt.Sprintf("Received query: from %v to %v\n", fromTimestampUnixStr, toTimestampUnixStr))
+		logger.Info().Msg(fmt.Sprintf("Received query: from %v to %v", fromTimestampUnixStr, toTimestampUnixStr))
 	}
 
 	fromTimestampUnix, err := strconv.ParseInt(fromTimestampUnixStr, 10, 64)

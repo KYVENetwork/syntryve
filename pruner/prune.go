@@ -33,7 +33,7 @@ func PruneDB(until, dbPath string) error {
 	}
 
 	rowsAffected, _ := result.RowsAffected()
-	logger.Info().Msg(fmt.Sprintf("Deleted %v entries\n", rowsAffected))
+	logger.Info().Msg(fmt.Sprintf("Deleted %v entries", rowsAffected))
 
 	// VACUUM the database to reclaim unused space
 	_, err = db.Exec("VACUUM")

@@ -48,7 +48,7 @@ func GetLatestPoolKey(chainId string, poolId int64, poolEndpoints string) (strin
 		}
 
 		if i <= utils.BackoffMaxRetries {
-			logger.Info().Msg(fmt.Sprintf("retrying to query pool again in %v\n", delay))
+			logger.Info().Msg(fmt.Sprintf("retrying to query pool again in %v", delay))
 			time.Sleep(delay)
 		}
 	}
