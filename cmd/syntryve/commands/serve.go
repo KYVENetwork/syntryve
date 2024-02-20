@@ -40,6 +40,9 @@ func init() {
 	serveCmd.Flags().StringVar(&chainId, "chain-id", "kyve-1", "KYVE chain-id (required for pruning)")
 
 	serveCmd.Flags().Int64Var(&poolId, "pool-id", 0, "KYVE pool id (required for pruning)")
+	if err := serveCmd.MarkFlagRequired("pool-id"); err != nil {
+		panic(fmt.Errorf("flag 'pool-id' should be required: %w", err))
+	}
 
 	serveCmd.Flags().StringVar(&poolEndpoints, "endpoints", "", "overwrite endpoints to query latest KYVE pool key")
 
