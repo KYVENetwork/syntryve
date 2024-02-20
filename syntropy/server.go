@@ -1,4 +1,4 @@
-package server
+package syntropy
 
 import (
 	"database/sql"
@@ -10,15 +10,17 @@ import (
 )
 
 type ApiServer struct {
-	port      int64
 	dbPath    string
+	debug     bool
+	port      int64
 	startTime int64
 }
 
-func StartApiServer(dbPath string, port int64) *ApiServer {
+func StartApiServer(dbPath string, debug bool, port int64) *ApiServer {
 	apiServer := &ApiServer{
-		port:      port,
 		dbPath:    dbPath,
+		debug:     debug,
+		port:      port,
 		startTime: time.Now().Unix(),
 	}
 
@@ -29,7 +31,7 @@ func StartApiServer(dbPath string, port int64) *ApiServer {
 	r.GET("/get_latest_key", apiServer.GetLatestKey)
 
 	if err := r.Run(fmt.Sprintf(":%d", port)); err != nil {
-		panic(err)
+		logger.Error().Str("err", err.Error()).Msg("failed to run api server")
 	}
 
 	return apiServer
@@ -39,7 +41,9 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	fromTimestampUnixStr := c.Param("from_timestamp")
 	toTimestampUnixStr := c.Param("to_timestamp")
 
-	fmt.Printf("Received query: from %v to %v\n", fromTimestampUnixStr, toTimestampUnixStr)
+	if apiServer.debug {
+		logger.Info().Msg(fmt.Sprintf("Received query: from %v to %v", fromTimestampUnixStr, toTimestampUnixStr))
+	}
 
 	fromTimestampUnix, err := strconv.ParseInt(fromTimestampUnixStr, 10, 64)
 	if err != nil {
@@ -76,7 +80,9 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 	defer db.Close()
 
 	query := "SELECT data FROM messages WHERE strftime('%s', created) BETWEEN ? AND ?"
+	mu.Lock()
 	rows, err := db.Query(query, fromTimestampUnixStr, toTimestampUnixStr)
+
 	if err != nil {
 		panic(err)
 	}
@@ -97,6 +103,8 @@ func (apiServer *ApiServer) GetItemHandler(c *gin.Context) {
 		messages = append(messages, data)
 	}
 
+	mu.Unlock()
+
 	if len(messages) == 0 {
 		c.JSON(http.StatusOK, [][]byte{})
 	} else {
@@ -113,14 +121,30 @@ func (apiServer *ApiServer) GetLatestKey(c *gin.Context) {
 
 	query := "SELECT MAX(created) FROM messages"
 
+	mu.Lock()
+
 	var latestKey string
-	err = db.QueryRow(query).Scan(&latestKey)
+	rows, err := db.Query(query)
+	defer rows.Close()
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
+
+	for rows.Next() {
+		err := rows.Scan(&latestKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+	}
+
+	mu.Unlock()
 
 	layout := "2006-01-02 15:04:05.99999-07:00"
 	timestamp, err := time.Parse(layout, latestKey)
